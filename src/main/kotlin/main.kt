@@ -56,8 +56,9 @@ fun parseInput(): List<String> {
 class LineNumbers(val lineIn1: Int, val lineIn2: Int)
 class LineInfo(val added: List<LineNumbers>, val deleted: List<LineNumbers>, val unchanged: List<LineNumbers>)
 
-fun outputAnswer(showOpts: Int, hideOpts: Int, ignoreLines: Boolean, outputFile: String?, addWrite: Boolean) {
-    TODO()
+fun outputAnswer(output: LineInfo, showOpts: Int, hideOpts: Int, outputFileName: String, addWrite: Char) {
+    val outputFile = File(outputFileName)
+
 }
 
 fun myHash(str: String): Int {
@@ -70,7 +71,7 @@ fun myHash(str: String): Int {
     return result.toInt()
 }
 
-fun findLCS(file1Lines: List<String>, file2Lines: List<String>): LineInfo {
+fun findLCS(file1Lines: List<String>, file2Lines: List<String>, ignoreLines: Boolean): LineInfo {
     // возвращает информацию о строках: про каждую строку будет известен ее номер в файле 1 и файле 2 (если она есть)
     val numLines1 = file1Lines.size
     val numLines2 = file2Lines.size
@@ -89,8 +90,10 @@ fun findLCS(file1Lines: List<String>, file2Lines: List<String>): LineInfo {
     repeat(numLines1) { num1 ->
         repeat(numLines2) { num2 ->
             when {
-                file1Lines[num1] == file2Lines[num2] -> dp[num1 + 1][num2 + 1] = dp[num1][num2] + 1
-                else -> dp[num1 + 1][num2 + 1] = dp[num1][num2 + 1].coerceAtLeast(dp[num1 + 1][num2])
+                // или пропуск пустых строк, или неравенство
+                (ignoreLines && (file1Lines[num1].isEmpty() || file2Lines[num2].isEmpty())) ||
+                        hashedFile1[num1] != hashedFile2[num2] -> dp[num1 + 1][num2 + 1] = dp[num1][num2 + 1].coerceAtLeast(dp[num1 + 1][num2])
+                else -> dp[num1 + 1][num2 + 1] = dp[num1][num2] + 1
             }
         }
     }
@@ -104,11 +107,13 @@ fun findLCS(file1Lines: List<String>, file2Lines: List<String>): LineInfo {
     var num2 = numLines2 // ответ динамики в dp[num1][num2]
     while (num1 > 0 && num2 > 0) {  // нулевая строка и нулевой столбец фиктивные
         if (dp[num1][num2] == dp[num1 - 1][num2]) {
-            deleted.add(LineNumbers(num1 - 1, -1)) // так как мы не пришли по диагонали,
+            if (!ignoreLines || file1Lines[num1 - 1].isNotEmpty())  // если строка пустая, и нужно игнорировать
+                deleted.add(LineNumbers(num1 - 1, -1)) // так как мы не пришли по диагонали,
             // этой строки нет в НОП -> она удалена (она из первого файла)
             num1--
         } else if (dp[num1][num2] == dp[num1][num2 - 1]) {
-            added.add(LineNumbers(-1, num2 - 1)) //аналогично, этой строки нет в НОП -> добавлена
+            if (!ignoreLines || file2Lines[num2 - 1].isNotEmpty())  // если строка пустая, и нужно игнорировать
+                added.add(LineNumbers(-1, num2 - 1)) //аналогично, этой строки нет в НОП -> добавлена
             num2--
         } else {
             unchanged.add(LineNumbers(num1 - 1, num2 - 1)) // значит, мы пришли по диагонали -> строки есть
@@ -117,11 +122,13 @@ fun findLCS(file1Lines: List<String>, file2Lines: List<String>): LineInfo {
         }
     }
     while (num1 > 0) { // некоторые строки не были добавлены, если while вышел по num2 = 0
-        deleted.add(LineNumbers(num1 - 1, -1))
+        if (!ignoreLines || file1Lines[num1 - 1].isNotEmpty())  // если строка пустая, и нужно игнорировать
+            deleted.add(LineNumbers(num1 - 1, -1))
         num1--
     }
     while (num2 > 0) { // некоторые строки не были добавлены, если while вышел по num1 = 0
-        added.add(LineNumbers(-1, num2 - 1))
+        if (!ignoreLines || file2Lines[num2 - 1].isNotEmpty())  // если строка пустая, и нужно игнорировать
+            added.add(LineNumbers(-1, num2 - 1))
         num2--
     }
     added.reverse()
@@ -224,8 +231,8 @@ fun processCommand(commandList: List<String>): Int { // возвращает 0, 
         }
     }
 
-
-
+    val returnedLCSData = findLCS(file1Lines, file2Lines, ignoreLines)
+    outputAnswer(returnedLCSData, showOpts, hideOpts, outputFile, addWrite)
     return 0
 }
 

@@ -55,7 +55,7 @@ internal class Test1 {
 
     @Test
     fun findLCSTest1() {
-        val ret = findLCS(listOf("abacaba", "baca"), listOf("abacaba", "baca"))
+        val ret = findLCS(listOf("abacaba", "baca"), listOf("abacaba", "baca"), false)
         assertEquals(0, ret.added.size)
         assertEquals(0, ret.deleted.size)
         assertEquals(2, ret.unchanged.size)
@@ -68,7 +68,7 @@ internal class Test1 {
 
     @Test
     fun findLCSTest2() {
-        val ret = findLCS(listOf("abacaba", "baca"), listOf("baca", "baca"))
+        val ret = findLCS(listOf("abacaba", "baca"), listOf("baca", "baca"), false)
         assertEquals(1, ret.added.size)
         assertEquals(1, ret.deleted.size)
         assertEquals(1, ret.unchanged.size)
@@ -83,7 +83,7 @@ internal class Test1 {
 
     @Test
     fun findLCSTest3() {
-        val ret = findLCS(listOf("abacaba", "baca", "aoao", "baca"), listOf("baca", "baca"))
+        val ret = findLCS(listOf("abacaba", "baca", "aoao", "baca"), listOf("baca", "baca"), false)
         assertEquals(0, ret.added.size)
         assertEquals(2, ret.deleted.size)
         assertEquals(2, ret.unchanged.size)
@@ -100,7 +100,7 @@ internal class Test1 {
 
     @Test
     fun findLCSTest4() {
-        val ret = findLCS(listOf("aaaaa", "bb", "c"), listOf("d", "eee"))
+        val ret = findLCS(listOf("aaaaa", "bb", "c"), listOf("d", "eee"), false)
         assertEquals(2, ret.added.size)
         assertEquals(3, ret.deleted.size)
         assertEquals(0, ret.unchanged.size)
@@ -115,5 +115,54 @@ internal class Test1 {
         assertEquals(0, ret.added[0].lineIn2)
         assertEquals(-1, ret.added[1].lineIn1)
         assertEquals(1, ret.added[1].lineIn2)
+    }
+
+    @Test
+    fun findLCSTest5() {
+        val ret = findLCS(listOf("aaaaa", "", "c"), listOf("", "eee"), true)
+        assertEquals(1, ret.added.size)
+        assertEquals(2, ret.deleted.size)
+        assertEquals(0, ret.unchanged.size)
+
+        assertEquals(0, ret.deleted[0].lineIn1)
+        assertEquals(-1, ret.deleted[0].lineIn2)
+        assertEquals(2, ret.deleted[1].lineIn1)
+        assertEquals(-1, ret.deleted[1].lineIn2)
+        assertEquals(-1, ret.added[0].lineIn1)
+        assertEquals(1, ret.added[0].lineIn2)
+    }
+
+    @Test
+    fun findLCSTest6() {
+        val ret = findLCS(listOf("deleted", "", "unchanged", "", ""), listOf("", "", "", "unchanged"), true)
+        assertEquals(0, ret.added.size)
+        assertEquals(1, ret.deleted.size)
+        assertEquals(1, ret.unchanged.size)
+
+        assertEquals(0, ret.deleted[0].lineIn1)
+        assertEquals(-1, ret.deleted[0].lineIn2)
+        assertEquals(2, ret.unchanged[0].lineIn1)
+        assertEquals(3, ret.unchanged[0].lineIn2)
+    }
+
+    @Test
+    fun findLCSTest7() {
+        val ret = findLCS(listOf("deleted", "", "unchanged", "", ""), listOf("", "", "", "unchanged"), false)
+        assertEquals(1, ret.added.size)
+        assertEquals(2, ret.deleted.size)
+        assertEquals(3, ret.unchanged.size)
+
+        assertEquals(0, ret.deleted[0].lineIn1)
+        assertEquals(-1, ret.deleted[0].lineIn2)
+        assertEquals(2, ret.deleted[1].lineIn1)
+        assertEquals(-1, ret.deleted[1].lineIn2)
+        assertEquals(1, ret.unchanged[0].lineIn1)
+        assertEquals(0, ret.unchanged[0].lineIn2)
+        assertEquals(3, ret.unchanged[1].lineIn1)
+        assertEquals(1, ret.unchanged[1].lineIn2)
+        assertEquals(4, ret.unchanged[2].lineIn1)
+        assertEquals(2, ret.unchanged[2].lineIn2)
+        assertEquals(-1, ret.added[0].lineIn1)
+        assertEquals(3, ret.added[0].lineIn2)
     }
 }
