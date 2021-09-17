@@ -30,6 +30,10 @@ fun errNoParameters(opt: String) {
     println("У опции $opt должны быть параметры, но их нет")
 }
 
+fun errBothEmpty() {
+    println("Нечего сравнивать: оба файла пусты")
+}
+
 fun printHelp() {
     TODO()
 }
@@ -76,7 +80,40 @@ fun outputAnswer(showOpts: Int, hideOpts: Int, ignoreLines: Boolean, outputFile:
 }
 
 fun findLCS(file1Lines: List<String>, file2Lines: List<String>): List<List<LineNumbers>> {
+    val numLines1 = file1Lines.size
+    val numLines2 = file2Lines.size
+    var dp = Array(2) { Array(numLines2) {0} }  // первое измерение можно сделать не размера num1Lines, а 2
+    // так как используется только предыдущий слой при подсчете динамики
+    val hashedFile1: MutableList<Int> = mutableListOf()
+    val hashedFile2: MutableList<Int> = mutableListOf()
+    // вместо строк будем сравнивать хэши
+    repeat(numLines1) {
+        hashedFile1.add(hashCode(file1Lines[it]))
+    }
+    repeat(numLines2) {
+        hashedFile2.add(hashCode(file2Lines[it]))
+    }
+    TODO()
+}
 
+fun readFiles(file1Name: String, file2Name: String): Pair<List<String>, List<String>> {
+    val file1 = File(file1Name)
+    val file2 = File(file2Name)
+    if (!file1.exists()) {  // не существует файла с именем file1Name
+        errWrongInputFile(file1Name)
+        return Pair(emptyList(), emptyList())
+    }
+    if (!file2.exists()) {  // не существует файла с именем file2Name
+        errWrongInputFile(file2Name)
+        return Pair(emptyList(), emptyList())
+    }
+
+    val result = Pair(file1.readLines(), file2.readLines())  // сначала список строк первого, потом второго
+    if (result.first.isEmpty() && result.second.isEmpty()) {  // оба файла пусты
+        errBothEmpty()
+    }
+
+    return result
 }
 
 fun processCommand(commandList: List<String>): Int { // возвращает 0, если выполнилось без ошибок, 1 иначе
@@ -87,14 +124,8 @@ fun processCommand(commandList: List<String>): Int { // возвращает 0, 
 
     val file1Name = commandList[0]
     val file2Name = commandList[1]
-    val file1 = File(file1Name)
-    val file2 = File(file2Name)
-    if (!file1.exists()) {
-        errWrongInputFile(file1Name)
-        return 1
-    }
-    if (!file2.exists()) {
-        errWrongInputFile(file2Name)
+    val (file1Lines, file2Lines) = readFiles(file1Name, file2Name)
+    if (file1Lines.isEmpty() && file2Lines.isEmpty()) {
         return 1
     }
 
