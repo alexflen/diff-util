@@ -23,43 +23,43 @@ fun printHelp() {
     TODO()
 }
 
-fun parseInput(): Array<String> {
+fun parseInput(): List<String> {
     var input = readLine()
     if (input != null) {
         input += ' '    // чтобы последняя строка корректно обработалась
         var tempStr = ""
-        var result = emptyArray<String>()
+        val result: MutableList<String> = mutableListOf()
         for (symb in input) {
             if (symb == ' ') {
                 if (tempStr.isNotEmpty()) {
-                    result += tempStr
+                    result.add(tempStr)
                     tempStr = ""
                 }
             } else {
                 tempStr += symb
             }
         }
-        return result
+        return result.toList()
     } else {
         errNotEnoughArgs()
-        return emptyArray()
+        return emptyList()
     }
 }
 
 
-fun processCommand(commandList: Array<String>) {
+fun processCommand(commandList: List<String>) {
     TODO()
 }
 
-fun outputAnswer(showOpts: Int, hideOpts: Int, ignoreLines: Boolean, outputFile: String?) {
+fun outputAnswer(showOpts: Int, hideOpts: Int, ignoreLines: Boolean, outputFile: String?, addWrite: Boolean) {
     TODO()
 }
 
-// file1.txt file2.txt -s=uad -h=ins -i -w=answer.txt
+// file1.txt file2.txt -s=uad -h=ins -i -w/W=answer.txt
 
 fun main(args: Array<String>) {
-    val commandList: Array<String> = if (args.isNotEmpty()) {
-        args.copyOf()
+    val commandList: List<String> = if (args.isNotEmpty()) {
+        args.toList()
     } else {
         parseInput()
     }
