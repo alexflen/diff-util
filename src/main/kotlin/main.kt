@@ -1,22 +1,16 @@
 import java.io.File
-
-fun terminate() {
-    TODO()
-}
+import kotlin.system.exitProcess
 
 fun errNotEnoughArgs() {
     println("Недостаточно параметров для вызова функции")
-    terminate()
 }
 
 fun errUnknownOption(opt: Char) {
     println("Неизвестная опция $opt")
-    terminate()
 }
 
 fun errWrongInputFile(fileName: String) {
     println("Неверное имя файла: $fileName")
-    terminate()
 }
 
 fun printHelp() {
@@ -64,5 +58,7 @@ fun main(args: Array<String>) {
         parseInput()
     }
 
-
+    if (commandList.isEmpty()) { // строка ввода пустая, следует завершить выполнение программы
+        return
+    }
 }
