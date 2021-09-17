@@ -1,3 +1,4 @@
+import jdk.internal.jimage.ImageStringsReader.hashCode
 import java.io.File
 import kotlin.system.exitProcess
 
@@ -33,6 +34,18 @@ fun printHelp() {
     TODO()
 }
 
+fun checkIfOkFormatParams(opt: Char, currOpt: String): Boolean {  // true, если все хорошо, false, если что-то не так
+    if (currOpt.length == 2 || (currOpt.length == 3 && currOpt[2] == '=')) { // у опции должны быть параметры
+        errNoParameters("-$opt")
+        return false
+    }
+    if (currOpt[2] != '=') {  // неправильный формат (без =)
+        errFormatEqual()
+        return false
+    }
+    return true
+}
+
 fun parseInput(): List<String> {
     var input = readLine()
     if (input != null) {
@@ -56,8 +69,14 @@ fun parseInput(): List<String> {
     }
 }
 
+class LineNumbers(val lineIn1: Int, val lineIn2: Int)
+
 fun outputAnswer(showOpts: Int, hideOpts: Int, ignoreLines: Boolean, outputFile: String?, addWrite: Boolean) {
     TODO()
+}
+
+fun findLCS(file1Lines: List<String>, file2Lines: List<String>): List<List<LineNumbers>> {
+
 }
 
 fun processCommand(commandList: List<String>): Int { // возвращает 0, если выполнилось без ошибок, 1 иначе
@@ -79,10 +98,10 @@ fun processCommand(commandList: List<String>): Int { // возвращает 0, 
         return 1
     }
 
-    var showOpts = 7
-    var hideOpts = 0
-    var ignoreLines = false
-    var outputFile = ""
+    var showOpts = 7 // по умолчанию все строки показываются
+    var hideOpts = 0 // по умолчанию вся информация показывается
+    var ignoreLines = false // по умолчанию пустые строки не пропускаются
+    var outputFile = "" // по умолчанию вывод в консоль
     var addWrite = '-'
 
     var outputLines: MutableList<String>
@@ -112,18 +131,35 @@ fun processCommand(commandList: List<String>): Int { // возвращает 0, 
             }
         } else if (options[opt] == "F") {   // добавление файла вывода
             // учитывается только последний вызов w или W
-            if (currOpt.length < 4) { // пустое имя выходного файла; у опции должны быть параметры
-                errNoParameters("-$opt")
-                return 1
-            }
-            if (currOpt[2] != '=') {  // неправильный формат (без =)
-                errFormatEqual()
+            if (!checkIfOkFormatParams(opt, currOpt)) {
                 return 1
             }
             outputFile = currOpt.substring(3)
             addWrite = opt // w - запись, W - дозапись
+        } else {  // show or hide option
+            // учитывается только последний вызов
+            if (!checkIfOkFormatParams(opt, currOpt)) {
+                return 1
+            }
+            when (opt) {
+                's' -> showOpts = 0
+                'h' -> hideOpts = 0
+            }
+            for (param in currOpt.substring(3)) {
+                val symbIndex = options[opt]!!.indexOf(param)
+                if (symbIndex == -1) {
+                    errUnknownParam("-$opt")
+                    return 1
+                }
+                when (opt) {
+                    's' -> showOpts = (showOpts or (1 shl symbIndex))
+                    'h' -> hideOpts = (hideOpts or (1 shl symbIndex))
+                }
+            }
         }
     }
+
+
 
     return 0
 }
