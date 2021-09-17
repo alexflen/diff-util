@@ -1,38 +1,17 @@
-
 import java.io.File
-import java.lang.Math.max
-import java.util.Objects.hashCode
 
-fun errNotEnoughArgs() {
-    println("Недостаточно параметров для вызова функции")
-}
-
-fun errUnknownOption(opt: String) {
-    println("Неизвестная опция $opt")
-}
-
-fun errWrongInputFile(fileName: String) {
-    println("Неверное имя файла: $fileName")
-}
-
-fun errOptsMustBegin() {
-    println("Неверный формат: опции должны начинаться с -")
-}
-
-fun errFormatEqual() {
-    println("Неверный формат: параметры опций должны идти после =")
-}
-
-fun errUnknownParam(opt: String) {
-    println("Неизвестный параметр для опции $opt")
-}
-
-fun errNoParameters(opt: String) {
-    println("У опции $opt должны быть параметры, но их нет")
-}
-
-fun errBothEmpty() {
-    println("Нечего сравнивать: оба файла пусты")
+fun outputError(error: String, opt: String = "") {  // функция выводит сообщение об ошибке
+    when (error) {
+        "NotEnoughArgs"     -> println("Недостаточно параметров для вызова функции")
+        "UnknownOption"     -> println("Неизвестная опция $opt")
+        "WrongInputFile"    -> println("Неверное имя файла: $opt")
+        "OptsMustBegin"     -> println("Неверный формат: опции должны начинаться с -")
+        "FormatEqual"       -> println("Неверный формат: параметры опций должны идти после =")
+        "UnknownParam"      -> println("Неизвестный параметр для опции $opt")
+        "NoParameters"      -> println("У опции $opt должны быть параметры, но их нет")
+        "BothEmpty"         -> println("Нечего сравнивать: оба файла пусты")
+        else                -> println("Неизвестная ошибка")
+    }
 }
 
 fun printHelp() {
@@ -41,11 +20,11 @@ fun printHelp() {
 
 fun checkIfOkFormatParams(opt: Char, currOpt: String): Boolean {  // true, если все хорошо, false, если что-то не так
     if (currOpt.length == 2 || (currOpt.length == 3 && currOpt[2] == '=')) { // у опции должны быть параметры
-        errNoParameters("-$opt")
+        outputError("NoParameters", "-$opt")
         return false
     }
     if (currOpt[2] != '=') {  // неправильный формат (без =)
-        errFormatEqual()
+        outputError("FormatEqual")
         return false
     }
     return true
@@ -69,7 +48,7 @@ fun parseInput(): List<String> {
         }
         return result.toList()
     } else {
-        errNotEnoughArgs()
+        outputError("NotEnoughArgs")
         return emptyList()
     }
 }
@@ -97,14 +76,14 @@ fun findLCS(file1Lines: List<String>, file2Lines: List<String>): LineInfo {
     val numLines2 = file2Lines.size
     val dp = Array(numLines1 + 1) { Array(numLines2 + 1) {0} }  // динамика будет dp[i][j] -- LCS
     // если взяли первые i строк первого и первые j строк второго; ответ в dp[numLines1][numLines2]
-    val hashedFile1: MutableList<String> = mutableListOf()
-    val hashedFile2: MutableList<String> = mutableListOf()
+    val hashedFile1: MutableList<Int> = mutableListOf()
+    val hashedFile2: MutableList<Int> = mutableListOf()
     // вместо строк будем сравнивать хэши
     repeat(numLines1) {
-        hashedFile1.add(file1Lines[it])
+        hashedFile1.add(myHash(file1Lines[it]))
     }
     repeat(numLines2) {
-        hashedFile2.add(file2Lines[it])
+        hashedFile2.add(myHash(file2Lines[it]))
     }
 
     repeat(numLines1) { num1 ->
@@ -155,32 +134,32 @@ fun readFiles(file1Name: String, file2Name: String): Pair<List<String>, List<Str
     val file1 = File(file1Name)
     val file2 = File(file2Name)
     if (!file1.exists()) {  // не существует файла с именем file1Name
-        errWrongInputFile(file1Name)
+        outputError("WrongInputFile", file1Name)
         return Pair(emptyList(), emptyList())
     }
     if (!file2.exists()) {  // не существует файла с именем file2Name
-        errWrongInputFile(file2Name)
+        outputError("WrongInputFile", file2Name)
         return Pair(emptyList(), emptyList())
     }
 
     val result = Pair(file1.readLines(), file2.readLines())  // сначала список строк первого, потом второго
     if (result.first.isEmpty() && result.second.isEmpty()) {  // оба файла пусты
-        errBothEmpty()
+        outputError("BothEmpty")
     }
 
     return result
 }
 
 fun processCommand(commandList: List<String>): Int { // возвращает 0, если выполнилось без ошибок, 1 иначе
-    if (commandList.size == 1) {
-        errNotEnoughArgs()
+    if (commandList.size == 1) {  // в команду нужно передать хотя бы два аргумента: названия двух файлов
+        outputError("NotEnoughArgs")
         return 1
     }
 
     val file1Name = commandList[0]
     val file2Name = commandList[1]
-    val (file1Lines, file2Lines) = readFiles(file1Name, file2Name)
-    if (file1Lines.isEmpty() && file2Lines.isEmpty()) {
+    val (file1Lines, file2Lines) = readFiles(file1Name, file2Name)  // списки строк для файлов
+    if (file1Lines.isEmpty() && file2Lines.isEmpty()) {   // функция чтения файлов выдала исключение
         return 1
     }
 
@@ -188,29 +167,29 @@ fun processCommand(commandList: List<String>): Int { // возвращает 0, 
     var hideOpts = 0 // по умолчанию вся информация показывается
     var ignoreLines = false // по умолчанию пустые строки не пропускаются
     var outputFile = "" // по умолчанию вывод в консоль
-    var addWrite = '-'
+    var addWrite = '-' // по умолчанию вывод в консоль
 
     var outputLines: MutableList<String>
     val options: Map<Char, String> = mapOf('h' to "ins", 's' to "adu", 'i' to "", 'w' to "F", 'W' to "F")
     for (it in (2 until commandList.size)) {
         val currOpt = commandList[it]
         if (currOpt[0] != '-') {
-            errOptsMustBegin()
+            outputError("OptsMustBegin")
             return 1
         }
 
         if (currOpt.length == 1) {
-            errUnknownOption(currOpt)
+            outputError("UnknownOption", currOpt)
         }
 
         val opt = currOpt[1]
         if (!options.containsKey(opt)) {
-            errUnknownOption("-$opt")
+            outputError("UnknownOption", "-$opt")
             return 1
         }
         if (opt == 'i') {   // опция ignore empty lines не требует параметров
             if (currOpt.length > 2) {
-                errUnknownParam("-$opt")
+                outputError("UnknownParam", "-$opt")
                 return 1
             } else {
                 ignoreLines = true
@@ -234,7 +213,7 @@ fun processCommand(commandList: List<String>): Int { // возвращает 0, 
             for (param in currOpt.substring(3)) {
                 val symbIndex = options[opt]!!.indexOf(param)
                 if (symbIndex == -1) {
-                    errUnknownParam("-$opt")
+                    outputError("UnknownParam", "-$opt")
                     return 1
                 }
                 when (opt) {
