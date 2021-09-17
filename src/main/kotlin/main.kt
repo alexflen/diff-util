@@ -1,6 +1,7 @@
-import jdk.internal.jimage.ImageStringsReader.hashCode
+
 import java.io.File
-import kotlin.system.exitProcess
+import java.lang.Math.max
+import java.util.Objects.hashCode
 
 fun errNotEnoughArgs() {
     println("Недостаточно параметров для вызова функции")
@@ -74,26 +75,80 @@ fun parseInput(): List<String> {
 }
 
 class LineNumbers(val lineIn1: Int, val lineIn2: Int)
+class LineInfo(val added: List<LineNumbers>, val deleted: List<LineNumbers>, val unchanged: List<LineNumbers>)
 
 fun outputAnswer(showOpts: Int, hideOpts: Int, ignoreLines: Boolean, outputFile: String?, addWrite: Boolean) {
     TODO()
 }
 
-fun findLCS(file1Lines: List<String>, file2Lines: List<String>): List<List<LineNumbers>> {
+fun myHash(str: String): Int {
+    val mod: Long = 1000000009 // 10^9 + 9
+    val p: Long = 263
+    var result: Long = 0
+    for (symb in str) {
+        result = (result * p + symb.code) % mod
+    }
+    return result.toInt()
+}
+
+fun findLCS(file1Lines: List<String>, file2Lines: List<String>): LineInfo {
+    // возвращает информацию о строках: про каждую строку будет известен ее номер в файле 1 и файле 2 (если она есть)
     val numLines1 = file1Lines.size
     val numLines2 = file2Lines.size
-    var dp = Array(2) { Array(numLines2) {0} }  // первое измерение можно сделать не размера num1Lines, а 2
-    // так как используется только предыдущий слой при подсчете динамики
-    val hashedFile1: MutableList<Int> = mutableListOf()
-    val hashedFile2: MutableList<Int> = mutableListOf()
+    val dp = Array(numLines1 + 1) { Array(numLines2 + 1) {0} }  // динамика будет dp[i][j] -- LCS
+    // если взяли первые i строк первого и первые j строк второго; ответ в dp[numLines1][numLines2]
+    val hashedFile1: MutableList<String> = mutableListOf()
+    val hashedFile2: MutableList<String> = mutableListOf()
     // вместо строк будем сравнивать хэши
     repeat(numLines1) {
-        hashedFile1.add(hashCode(file1Lines[it]))
+        hashedFile1.add(file1Lines[it])
     }
     repeat(numLines2) {
-        hashedFile2.add(hashCode(file2Lines[it]))
+        hashedFile2.add(file2Lines[it])
     }
-    TODO()
+
+    repeat(numLines1) { num1 ->
+        repeat(numLines2) { num2 ->
+            when {
+                file1Lines[num1] == file2Lines[num2] -> dp[num1 + 1][num2 + 1] = dp[num1][num2] + 1
+                else -> dp[num1 + 1][num2 + 1] = dp[num1][num2 + 1].coerceAtLeast(dp[num1 + 1][num2])
+            }
+        }
+    }
+
+    val added: MutableList<LineNumbers> = mutableListOf()
+    val deleted: MutableList<LineNumbers> = mutableListOf()
+    val unchanged: MutableList<LineNumbers> = mutableListOf()
+    // восстановление ответа: если пришли из клеток, соседних по стороне, то вернемся в них
+    // иначе мы добавили две равные строки (мы рассматриваем случаи именно в таком порядке
+    var num1 = numLines1
+    var num2 = numLines2 // ответ динамики в dp[num1][num2]
+    while (num1 > 0 && num2 > 0) {  // нулевая строка и нулевой столбец фиктивные
+        if (dp[num1][num2] == dp[num1 - 1][num2]) {
+            deleted.add(LineNumbers(num1 - 1, -1)) // так как мы не пришли по диагонали,
+            // этой строки нет в НОП -> она удалена (она из первого файла)
+            num1--
+        } else if (dp[num1][num2] == dp[num1][num2 - 1]) {
+            added.add(LineNumbers(-1, num2 - 1)) //аналогично, этой строки нет в НОП -> добавлена
+            num2--
+        } else {
+            unchanged.add(LineNumbers(num1 - 1, num2 - 1)) // значит, мы пришли по диагонали -> строки есть
+            num1--
+            num2--
+        }
+    }
+    while (num1 > 0) { // некоторые строки не были добавлены, если while вышел по num2 = 0
+        deleted.add(LineNumbers(num1 - 1, -1))
+        num1--
+    }
+    while (num2 > 0) { // некоторые строки не были добавлены, если while вышел по num1 = 0
+        added.add(LineNumbers(-1, num2 - 1))
+        num2--
+    }
+    added.reverse()
+    deleted.reverse()
+    unchanged.reverse()  // строки записывали в обратном порядке, т.к. шли с конца в восстановлении
+    return LineInfo(added.toList(), deleted.toList(), unchanged.toList())
 }
 
 fun readFiles(file1Name: String, file2Name: String): Pair<List<String>, List<String>> {
