@@ -73,13 +73,13 @@ fun outputLine(lineNum: LineNumbers, line: String, hideOpts: Int,
     var toOutput = ""
     if (((hideOpts shr 1) and 1) == 0) {  // не нужно прятать номера строк
         if (lineNum.lineIn1 != -1) {  // есть в первом файле
-            val lineNum1Str = lineNum.lineIn1.toString()
+            val lineNum1Str = (lineNum.lineIn1 + 1).toString()  // чтобы с 1 нумерация
             toOutput += "(${lineNum1Str.padStart(maxNumLen1)})"
         } else {
             toOutput += "".padStart(maxNumLen1 + 2) // добавить длину двух скобок
         }
         if (lineNum.lineIn2 != -1) {  // есть во втором файле
-            val lineNum2Str = lineNum.lineIn2.toString()
+            val lineNum2Str = (lineNum.lineIn2 + 1).toString()  // чтобы с 1 нумерация
             toOutput += "[${lineNum2Str.padStart(maxNumLen2)}]"
         } else {
             toOutput += "".padStart(maxNumLen2 + 2)  // добавить длину двух скобок
@@ -102,7 +102,59 @@ fun outputLine(lineNum: LineNumbers, line: String, hideOpts: Int,
 
 fun outputAnswer(output: LineInfo, showOpts: Int, hideOpts: Int, outputFileName: String, addWrite: Char,
                  maxNumLen1: Int, maxNumLen2: Int, file1Lines: List<String>, file2Lines: List<String>) {
-    TODO()
+    val sizeAdded = output.added.size
+    val sizeDeleted = output.deleted.size
+    val sizeUnchanged = output.unchanged.size
+    // если не нужно показывать, просто можно сказать указателем, что уже все показали, и показывать ничего не нужно
+    var iterAdd = when { // указатель на строку в добавленных
+        ((showOpts shr 0) and 1) == 1 -> 0
+        else -> sizeAdded
+    }
+    var iterDel = when { // указатель на строку в удаленных
+        ((showOpts shr 1) and 1) == 1 -> 0
+        else -> sizeDeleted
+    }
+    var iterUnc = when { // указатель на строку в неизменных
+        ((showOpts shr 2) and 1) == 1 -> 0
+        else -> sizeUnchanged
+    }
+
+    // будем использовать метод трех указателей с главным списком неизменных строк, между неизмененными строками
+    // будем выводить сначала удаления, потом добавления
+    while (iterUnc != sizeUnchanged) {
+        while (iterDel != sizeDeleted && output.deleted[iterDel].lineIn1 < output.unchanged[iterUnc].lineIn1) {
+            outputLine(output.deleted[iterDel], file1Lines[output.deleted[iterDel].lineIn1], hideOpts,
+                outputFileName, addWrite, maxNumLen1, maxNumLen2)
+            iterDel++
+        }
+        while (iterAdd != sizeAdded && output.added[iterAdd].lineIn2 < output.unchanged[iterUnc].lineIn2) {
+            outputLine(output.added[iterAdd], file2Lines[output.added[iterAdd].lineIn2], hideOpts,
+                outputFileName, addWrite, maxNumLen1, maxNumLen2)
+            iterAdd++
+        }
+        outputLine(output.unchanged[iterUnc], file1Lines[output.unchanged[iterUnc].lineIn1], hideOpts,
+            outputFileName, addWrite, maxNumLen1, maxNumLen2)
+        iterUnc++
+    }
+
+    // неизменные строки могли закончиться, а удаленные и добавленные -- нет
+    while (iterDel != sizeDeleted) {
+        outputLine(output.deleted[iterDel], file1Lines[output.deleted[iterDel].lineIn1], hideOpts,
+            outputFileName, addWrite, maxNumLen1, maxNumLen2)
+        iterDel++
+    }
+
+    while (iterAdd != sizeAdded) {
+        outputLine(output.added[iterAdd], file2Lines[output.added[iterAdd].lineIn2], hideOpts,
+            outputFileName, addWrite, maxNumLen1, maxNumLen2)
+        iterAdd++
+    }
+
+    if (((hideOpts shr 0) and 1) == 0) {  // не нужно скрывать информацию
+        writeAnywhere("\n", outputFileName, addWrite)
+        writeAnywhere("Added $sizeAdded line(s), deleted $sizeDeleted line(s), left unchanged $sizeUnchanged line(s)",
+            outputFileName, addWrite)
+    }
 }
 
 fun myHash(str: String): Int {  // считает хэш строки
@@ -220,7 +272,6 @@ fun processCommand(commandList: List<String>): Int { // возвращает 0, 
     var outputFile = "" // по умолчанию вывод в консоль
     var addWrite = '-' // по умолчанию вывод в консоль
 
-    var outputLines: MutableList<String>
     val options: Map<Char, String> = mapOf('h' to "ins", 's' to "adu", 'i' to "", 'w' to "F", 'W' to "F")
     // Map показывает возможные варианты параметров команд, а также кодирует их для 3-битного представления параметров
     for (it in (2 until commandList.size)) { // проходимся по опциям
