@@ -56,20 +56,17 @@ fun numberLength(number: Int): Int {
 class LineNumbers(val lineIn1: Int, val lineIn2: Int)
 class LineInfo(val added: List<LineNumbers>, val deleted: List<LineNumbers>, val unchanged: List<LineNumbers>)
 
-fun writeAnywhere(line: String, outputFileName: String, addWrite: Char) {
+fun writeAnywhere(line: String, outputFileName: String) {
     if (outputFileName == "") {
         print(line)
     } else {
         val outputFile = File(outputFileName)
-        when (addWrite) {
-            'w' -> outputFile.writeText(line)
-            else -> outputFile.appendText(line)
-        }
+        outputFile.appendText(line)
     }
 }
 
 fun outputLine(lineNum: LineNumbers, line: String, hideOpts: Int,
-               outputFileName: String, addWrite: Char, maxNumLen1: Int, maxNumLen2: Int) {
+               outputFileName: String, maxNumLen1: Int, maxNumLen2: Int) {
     var toOutput = ""
     if (((hideOpts shr 1) and 1) == 0) {  // не нужно прятать номера строк
         if (lineNum.lineIn1 != -1) {  // есть в первом файле
@@ -97,10 +94,10 @@ fun outputLine(lineNum: LineNumbers, line: String, hideOpts: Int,
         toOutput += "  "
     }
 
-    writeAnywhere("$toOutput$line\n", outputFileName, addWrite)
+    writeAnywhere("$toOutput$line\n", outputFileName)
 }
 
-fun outputAnswer(output: LineInfo, showOpts: Int, hideOpts: Int, outputFileName: String, addWrite: Char,
+fun outputAnswer(output: LineInfo, showOpts: Int, hideOpts: Int, outputFileName: String,
                  maxNumLen1: Int, maxNumLen2: Int, file1Lines: List<String>, file2Lines: List<String>) {
     val sizeAdded = output.added.size
     val sizeDeleted = output.deleted.size
@@ -122,18 +119,18 @@ fun outputAnswer(output: LineInfo, showOpts: Int, hideOpts: Int, outputFileName:
     while (iterUnc != sizeUnchanged) {
         while (iterDel != sizeDeleted && output.deleted[iterDel].lineIn1 < output.unchanged[iterUnc].lineIn1) {
             outputLine(output.deleted[iterDel], file1Lines[output.deleted[iterDel].lineIn1], hideOpts,
-                outputFileName, addWrite, maxNumLen1, maxNumLen2)
+                outputFileName, maxNumLen1, maxNumLen2)
             iterDel++
         }
         while (iterAdd != sizeAdded && output.added[iterAdd].lineIn2 < output.unchanged[iterUnc].lineIn2) {
             outputLine(output.added[iterAdd], file2Lines[output.added[iterAdd].lineIn2], hideOpts,
-                outputFileName, addWrite, maxNumLen1, maxNumLen2)
+                outputFileName, maxNumLen1, maxNumLen2)
             iterAdd++
         }
         if ((showOpts shr 2) == 1) { // нужно выводить неизмененные строки
             outputLine(
                 output.unchanged[iterUnc], file1Lines[output.unchanged[iterUnc].lineIn1], hideOpts,
-                outputFileName, addWrite, maxNumLen1, maxNumLen2)
+                outputFileName, maxNumLen1, maxNumLen2)
         }
         iterUnc++
     }
@@ -141,20 +138,20 @@ fun outputAnswer(output: LineInfo, showOpts: Int, hideOpts: Int, outputFileName:
     // неизменные строки могли закончиться, а удаленные и добавленные -- нет
     while (iterDel != sizeDeleted) {
         outputLine(output.deleted[iterDel], file1Lines[output.deleted[iterDel].lineIn1], hideOpts,
-            outputFileName, addWrite, maxNumLen1, maxNumLen2)
+            outputFileName, maxNumLen1, maxNumLen2)
         iterDel++
     }
 
     while (iterAdd != sizeAdded) {
         outputLine(output.added[iterAdd], file2Lines[output.added[iterAdd].lineIn2], hideOpts,
-            outputFileName, addWrite, maxNumLen1, maxNumLen2)
+            outputFileName, maxNumLen1, maxNumLen2)
         iterAdd++
     }
 
     if (((hideOpts shr 0) and 1) == 0) {  // не нужно скрывать информацию
-        writeAnywhere("\n", outputFileName, addWrite)
-        writeAnywhere("Добавлено строк $sizeAdded, удалено строк $sizeDeleted, не изменено $sizeUnchanged",
-            outputFileName, addWrite)
+        writeAnywhere("\n", outputFileName)
+        writeAnywhere("Добавлено строк $sizeAdded, удалено строк $sizeDeleted, не изменено $sizeUnchanged\n",
+            outputFileName)
     }
 }
 
@@ -172,7 +169,7 @@ fun findLCS(file1Lines: List<String>, file2Lines: List<String>, ignoreLines: Boo
     // возвращает информацию о строках: про каждую строку будет известен ее номер в файле 1 и файле 2 (если она есть)
     val numLines1 = file1Lines.size
     val numLines2 = file2Lines.size
-    val dp = Array(numLines1 + 1) { Array(numLines2 + 1) {0} }  // динамика будет dp[i][j] -- LCS
+    val dp = Array(numLines1 + 1) { Array(numLines2 + 1) { 0 } }  // динамика будет dp[i][j] -- LCS
     // если взяли первые i строк первого и первые j строк второго; ответ в dp[numLines1][numLines2]
     val hashedFile1: MutableList<Int> = mutableListOf()
     val hashedFile2: MutableList<Int> = mutableListOf()
@@ -202,6 +199,7 @@ fun findLCS(file1Lines: List<String>, file2Lines: List<String>, ignoreLines: Boo
     // иначе мы добавили две равные строки (мы рассматриваем случаи именно в таком порядке
     var num1 = numLines1
     var num2 = numLines2 // ответ динамики в dp[num1][num2]
+
     while (num1 > 0 && num2 > 0) {  // нулевая строка и нулевой столбец фиктивные
         if (dp[num1][num2] == dp[num1 - 1][num2]) {
             if (!ignoreLines || file1Lines[num1 - 1].isNotEmpty())  // если строка пустая, и нужно игнорировать
@@ -329,7 +327,17 @@ fun processCommand(commandList: List<String>): Int { // возвращает 0, 
     }
 
     val returnedLCSData = findLCS(file1Lines, file2Lines, ignoreLines)
-    outputAnswer(returnedLCSData, showOpts, hideOpts, outputFile, addWrite,
+    // создадим файл вывода, если его нет
+    if (outputFile != "") {
+        val fileForOutput = File(outputFile)
+        if (!fileForOutput.exists()) {
+            fileForOutput.createNewFile()
+        }
+        if (addWrite == 'w') {  // сотрем файл, если нужно, а дальше будет дозапись
+            fileForOutput.writeText("")
+        }
+    }
+    outputAnswer(returnedLCSData, showOpts, hideOpts, outputFile,
         numberLength(file1Lines.size), numberLength(file2Lines.size), file1Lines, file2Lines)
         // максимальная длина номера строки меньше либо равна длине количества строк в файле
     return 0
