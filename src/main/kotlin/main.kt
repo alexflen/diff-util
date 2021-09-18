@@ -347,4 +347,7 @@ fun main(args: Array<String>) {
         return
     }
 
+    if (processCommand(commandList) == 1) { // в процессе обработки произошла ошибка
+        return
+    }
 }

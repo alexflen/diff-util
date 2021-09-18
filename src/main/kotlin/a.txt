@@ -1,0 +1,4 @@
+Hello
+This is a file
+It is deleted
+It is unchanged
