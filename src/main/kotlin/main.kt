@@ -338,10 +338,6 @@ fun processCommand(commandList: List<String>): Int { // возвращает 0, 
 // file1.txt file2.txt -s=uad -h=ins -i -w/W=answer.txt
 
 fun main(args: Array<String>) {
-    if (File("b.txt").exists()) {
-        println("Yeah")
-    }
-
     val commandList: List<String> = if (args.isNotEmpty()) {
         args.toList()
     } else {
