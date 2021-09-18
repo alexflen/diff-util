@@ -14,10 +14,6 @@ fun outputError(error: String, opt: String = "") {  // функция вывод
     }
 }
 
-fun printHelp() {
-    TODO()
-}
-
 fun checkIfOkFormatParams(opt: Char, currOpt: String): Boolean {  // true, если все хорошо, false, если что-то не так
     if (currOpt.length == 2 || (currOpt.length == 3 && currOpt[2] == '=')) { // у опции должны быть параметры
         outputError("NoParameters", "-$opt")
@@ -53,15 +49,63 @@ fun parseInput(): List<String> {
     }
 }
 
+fun numberLength(number: Int): Int {
+    return number.toString().length
+}
+
 class LineNumbers(val lineIn1: Int, val lineIn2: Int)
 class LineInfo(val added: List<LineNumbers>, val deleted: List<LineNumbers>, val unchanged: List<LineNumbers>)
 
-fun outputAnswer(output: LineInfo, showOpts: Int, hideOpts: Int, outputFileName: String, addWrite: Char) {
-    val outputFile = File(outputFileName)
-
+fun writeAnywhere(line: String, outputFileName: String, addWrite: Char) {
+    if (outputFileName == "") {
+        print(line)
+    } else {
+        val outputFile = File(outputFileName)
+        when (addWrite) {
+            'w' -> outputFile.writeText(line)
+            else -> outputFile.appendText(line)
+        }
+    }
 }
 
-fun myHash(str: String): Int {
+fun outputLine(lineNum: LineNumbers, line: String, hideOpts: Int,
+               outputFileName: String, addWrite: Char, maxNumLen1: Int, maxNumLen2: Int) {
+    var toOutput = ""
+    if (((hideOpts shr 1) and 1) == 0) {  // не нужно прятать номера строк
+        if (lineNum.lineIn1 != -1) {  // есть в первом файле
+            val lineNum1Str = lineNum.lineIn1.toString()
+            toOutput += "(${lineNum1Str.padStart(maxNumLen1)})"
+        } else {
+            toOutput += "".padStart(maxNumLen1 + 2) // добавить длину двух скобок
+        }
+        if (lineNum.lineIn2 != -1) {  // есть во втором файле
+            val lineNum2Str = lineNum.lineIn2.toString()
+            toOutput += "[${lineNum2Str.padStart(maxNumLen2)}]"
+        } else {
+            toOutput += "".padStart(maxNumLen2 + 2)  // добавить длину двух скобок
+        }
+        toOutput += "  "// добавим разделение между номерами строк и оставшимся
+    }
+    if (((hideOpts shr 2) and 1) == 0) {  // не нужно прятать статус изменений
+        if (lineNum.lineIn1 == -1) {  // добавление
+            toOutput += "+"
+        } else if (lineNum.lineIn2 == -1) { // удаление
+            toOutput += "-"
+        } else { // без изменений
+            toOutput += "|"
+        }
+        toOutput += "  "
+    }
+
+    writeAnywhere("$toOutput$line\n", outputFileName, addWrite)
+}
+
+fun outputAnswer(output: LineInfo, showOpts: Int, hideOpts: Int, outputFileName: String, addWrite: Char,
+                 maxNumLen1: Int, maxNumLen2: Int, file1Lines: List<String>, file2Lines: List<String>) {
+    TODO()
+}
+
+fun myHash(str: String): Int {  // считает хэш строки
     val mod: Long = 1000000009 // 10^9 + 9
     val p: Long = 263
     var result: Long = 0
@@ -178,7 +222,8 @@ fun processCommand(commandList: List<String>): Int { // возвращает 0, 
 
     var outputLines: MutableList<String>
     val options: Map<Char, String> = mapOf('h' to "ins", 's' to "adu", 'i' to "", 'w' to "F", 'W' to "F")
-    for (it in (2 until commandList.size)) {
+    // Map показывает возможные варианты параметров команд, а также кодирует их для 3-битного представления параметров
+    for (it in (2 until commandList.size)) { // проходимся по опциям
         val currOpt = commandList[it]
         if (currOpt[0] != '-') {
             outputError("OptsMustBegin")
@@ -217,7 +262,7 @@ fun processCommand(commandList: List<String>): Int { // возвращает 0, 
                 's' -> showOpts = 0
                 'h' -> hideOpts = 0
             }
-            for (param in currOpt.substring(3)) {
+            for (param in currOpt.substring(3)) {  // проходимся по параметрам
                 val symbIndex = options[opt]!!.indexOf(param)
                 if (symbIndex == -1) {
                     outputError("UnknownParam", "-$opt")
@@ -232,7 +277,9 @@ fun processCommand(commandList: List<String>): Int { // возвращает 0, 
     }
 
     val returnedLCSData = findLCS(file1Lines, file2Lines, ignoreLines)
-    outputAnswer(returnedLCSData, showOpts, hideOpts, outputFile, addWrite)
+    outputAnswer(returnedLCSData, showOpts, hideOpts, outputFile, addWrite,
+        numberLength(file1Lines.size), numberLength(file2Lines.size), file1Lines, file2Lines)
+        // максимальная длина номера строки меньше либо равна длине количества строк в файле
     return 0
 }
 
@@ -248,6 +295,5 @@ fun main(args: Array<String>) {
     if (commandList.isEmpty()) { // строка ввода пустая, следует завершить выполнение программы
         return
     }
-
 
 }

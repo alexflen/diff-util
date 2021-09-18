@@ -165,4 +165,40 @@ internal class Test1 {
         assertEquals(-1, ret.added[0].lineIn1)
         assertEquals(3, ret.added[0].lineIn2)
     }
+
+    @Test
+    fun outputLineTest1() {
+        outputLine(LineNumbers(1, 3), "line line", 0, "", '-', 2, 1)
+        assertEquals("( 1)[3]  |  line line", stream.toString().trim().lines().last())
+    }
+
+    @Test
+    fun outputLineTest2() {
+        outputLine(LineNumbers(-1, 3), "line line", 0, "", '-', 2, 1)
+        assertEquals("    [3]  +  line line", stream.toString().trimEnd().lines().last())
+    }
+
+    @Test
+    fun outputLineTest3() {
+        outputLine(LineNumbers(4, -1), "line line", 0, "", '-', 3, 1)
+        assertEquals("(  4)     -  line line", stream.toString().trimEnd().lines().last())
+    }
+
+    @Test
+    fun outputLineTest4() {
+        outputLine(LineNumbers(4, -1), "line line", 2, "", '-', 3, 1)
+        assertEquals("-  line line", stream.toString().trimEnd().lines().last())
+    }
+
+    @Test
+    fun outputLineTest5() {
+        outputLine(LineNumbers(101, 121), "line line", 7, "", '-', 4, 4)
+        assertEquals("line line", stream.toString().trimEnd().lines().last())
+    }
+
+    @Test
+    fun outputLineTest6() {
+        outputLine(LineNumbers(11, 33), "line line", 5, "", '-', 2, 3)
+        assertEquals("(11)[ 33]  line line", stream.toString().trim().lines().last())
+    }
 }
