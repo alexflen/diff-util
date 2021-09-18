@@ -114,10 +114,8 @@ fun outputAnswer(output: LineInfo, showOpts: Int, hideOpts: Int, outputFileName:
         ((showOpts shr 1) and 1) == 1 -> 0
         else -> sizeDeleted
     }
-    var iterUnc = when { // указатель на строку в неизменных
-        ((showOpts shr 2) and 1) == 1 -> 0
-        else -> sizeUnchanged
-    }
+    var iterUnc = 0 // указатель на строку в неизменных, так как он главный, для сохранения порядка остальных строк
+    // по нему нужно проходиться
 
     // будем использовать метод трех указателей с главным списком неизменных строк, между неизмененными строками
     // будем выводить сначала удаления, потом добавления
@@ -132,8 +130,11 @@ fun outputAnswer(output: LineInfo, showOpts: Int, hideOpts: Int, outputFileName:
                 outputFileName, addWrite, maxNumLen1, maxNumLen2)
             iterAdd++
         }
-        outputLine(output.unchanged[iterUnc], file1Lines[output.unchanged[iterUnc].lineIn1], hideOpts,
-            outputFileName, addWrite, maxNumLen1, maxNumLen2)
+        if ((showOpts shr 2) == 1) { // нужно выводить неизмененные строки
+            outputLine(
+                output.unchanged[iterUnc], file1Lines[output.unchanged[iterUnc].lineIn1], hideOpts,
+                outputFileName, addWrite, maxNumLen1, maxNumLen2)
+        }
         iterUnc++
     }
 
@@ -152,7 +153,7 @@ fun outputAnswer(output: LineInfo, showOpts: Int, hideOpts: Int, outputFileName:
 
     if (((hideOpts shr 0) and 1) == 0) {  // не нужно скрывать информацию
         writeAnywhere("\n", outputFileName, addWrite)
-        writeAnywhere("Added $sizeAdded line(s), deleted $sizeDeleted line(s), left unchanged $sizeUnchanged line(s)",
+        writeAnywhere("Добавлено строк $sizeAdded, удалено строк $sizeDeleted, не изменено $sizeUnchanged",
             outputFileName, addWrite)
     }
 }
@@ -337,6 +338,10 @@ fun processCommand(commandList: List<String>): Int { // возвращает 0, 
 // file1.txt file2.txt -s=uad -h=ins -i -w/W=answer.txt
 
 fun main(args: Array<String>) {
+    if (File("b.txt").exists()) {
+        println("Yeah")
+    }
+
     val commandList: List<String> = if (args.isNotEmpty()) {
         args.toList()
     } else {
