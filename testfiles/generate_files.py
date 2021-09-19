@@ -52,6 +52,41 @@ def gen_test04():
 	file_in2.close()
 	file_answ.close()	
 
+
+
+def gen_test09():
+	file_in1 = open("09_file1.txt", "w")
+	file_in2 = open("09_file2.txt", "w")
+	file_answ = open("09_answ.txt", "w")
+
+	seq1 = ["кошкасобака" * 80, "слонбегемот" * 3, "ехиднадикобраз" * 43, "ежиклисичка" * 90, "рыбасом" * 33]
+	seq2 = ["catdoggy" * 30, "elephanthippo" * 80, "echidnaporcupine" * 3, "hedgehoggyfoxy" * 43, "catfish" * 90]
+	seqcommon = ["козликpiggy" * 10, "cowовечка" * 50, "хомячокzebra" * 80, "верблюдtiger" * 20, "sealпингвин" * 4]
+	
+	common = []
+	file_answ.write("There was\nsome info\nbefore the test\nso it has\nto be left\nhere\n")
+	for i in range(randint(600, 900)):
+		com = choice(seqcommon)
+		file_in1.write(com + "\n")
+		file_in2.write(com + "\n")
+		for j in range(randint(0, 10)):
+			genned = choice(seq1) + "\n"
+			file_in1.write(genned)
+			file_answ.write("-  " + genned)
+		for j in range(randint(0, 10)):
+			genned = choice(seq2) + "\n"
+			file_in2.write(genned)
+			file_answ.write("+  " + genned)
+
+	file_in1.close()
+	file_in2.close()
+	file_answ.close()
+	
+	file_used = open("09_soloutput.txt", "w")
+	file_used.write("There was\nsome info\nbefore the test\nso it has\nto be left\nhere\n")
+	file_used.close()
+
 seed(0)
 gen_test03()
 gen_test04()
+gen_test09()

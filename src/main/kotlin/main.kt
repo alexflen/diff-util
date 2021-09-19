@@ -235,11 +235,11 @@ fun findLCS(file1Lines: List<String>, file2Lines: List<String>, ignoreLines: Boo
 fun readFiles(file1Name: String, file2Name: String): Pair<List<String>, List<String>> {
     val file1 = File(file1Name)
     val file2 = File(file2Name)
-    if (!file1.exists()) {  // не существует файла с именем file1Name
+    if (!file1.isFile) {  // не существует файла с именем file1Name
         outputError("WrongInputFile", file1Name)
         return Pair(emptyList(), emptyList())
     }
-    if (!file2.exists()) {  // не существует файла с именем file2Name
+    if (!file2.isFile) {  // не существует файла с именем file2Name
         outputError("WrongInputFile", file2Name)
         return Pair(emptyList(), emptyList())
     }
@@ -330,7 +330,7 @@ fun processCommand(commandList: List<String>): Int { // возвращает 0, 
     // создадим файл вывода, если его нет
     if (outputFile != "") {
         val fileForOutput = File(outputFile)
-        if (!fileForOutput.exists()) {
+        if (!fileForOutput.isFile) {
             fileForOutput.createNewFile()
         }
         if (addWrite == 'w') {  // сотрем файл, если нужно, а дальше будет дозапись

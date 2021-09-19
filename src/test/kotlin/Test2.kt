@@ -86,4 +86,13 @@ internal class Test2 {
         val actualLine = stream.toString().trimEnd().lines().last()
         assertEquals(expectedLine, actualLine)
     }
+
+    @Test
+    fun mainTest9() {
+        System.setIn(ByteArrayInputStream(("testfiles\\09_file1.txt testfiles\\09_file2.txt -s=ad -h=ni -W=testfiles\\09_soloutput.txt").toByteArray()))
+        main(arrayOf())
+        val expectedLines = File("testfiles\\09_answ.txt").readLines()
+        val actualLines = File("testfiles\\09_soloutput.txt").readLines()
+        assertEquals(expectedLines, actualLines)
+    }
 }
