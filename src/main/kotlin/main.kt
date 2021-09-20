@@ -53,8 +53,8 @@ fun numberLength(number: Int): Int {
     return number.toString().length
 }
 
-class LineNumbers(val lineIn1: Int, val lineIn2: Int)
-class LineInfo(val added: List<LineNumbers>, val deleted: List<LineNumbers>, val unchanged: List<LineNumbers>)
+data class LineNumbers(val lineIn1: Int, val lineIn2: Int)
+data class LineInfo(val added: List<LineNumbers>, val deleted: List<LineNumbers>, val unchanged: List<LineNumbers>)
 
 fun writeAnywhere(line: String, outputFileName: String) {
     if (outputFileName == "") {
