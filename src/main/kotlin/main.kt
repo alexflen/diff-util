@@ -150,7 +150,7 @@ fun outputAnswer(output: LineInfo, showOpts: Int, hideOpts: Int, outputFileName:
 
     if (((hideOpts shr 0) and 1) == 0) {  // не нужно скрывать информацию
         writeAnywhere("\n", outputFileName)
-        writeAnywhere("Добавлено строк $sizeAdded, удалено строк $sizeDeleted, не изменено $sizeUnchanged\n",
+        writeAnywhere("Добавлено строк $sizeAdded, удалено строк $sizeDeleted, не изменено строк $sizeUnchanged\n",
             outputFileName)
     }
 }

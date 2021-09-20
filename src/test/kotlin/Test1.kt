@@ -199,13 +199,13 @@ internal class Test1 {
     @Test
     fun outputAnswerTest2() {
         outputAnswer(LineInfo(listOf(), listOf(LineNumbers(0, -1)), listOf(LineNumbers(1, 0), LineNumbers(2, 1))), 7, 0,"",  1, 1, listOf("line1", "line2", "line3"), listOf("line2", "line3"))
-        assertEquals("(1)     -  line1\n(2)[1]  |  line2\n(3)[2]  |  line3\n\nAdded 0 line(s), deleted 1 line(s), left unchanged 2 line(s)", stream.toString().trimEnd())
+        assertEquals("(1)     -  line1\n(2)[1]  |  line2\n(3)[2]  |  line3\n\nДобавлено строк 0, удалено строк 1, не изменено строк 2", stream.toString().trimEnd())
     }
 
     @Test
     fun outputAnswerTest3() {
         outputAnswer(LineInfo(listOf(), listOf(LineNumbers(0, -1)), listOf(LineNumbers(1, 0), LineNumbers(2, 1))), 3, 0,"",  1, 1, listOf("line1", "line2", "line3"), listOf("line2", "line3"))
-        assertEquals("(1)     -  line1\n\nAdded 0 line(s), deleted 1 line(s), left unchanged 2 line(s)", stream.toString().trimEnd())
+        assertEquals("(1)     -  line1\n\nДобавлено строк 0, удалено строк 1, не изменено строк 2", stream.toString().trimEnd())
     }
 
     @Test
