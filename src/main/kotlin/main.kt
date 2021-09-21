@@ -1,102 +1,32 @@
-import java.io.File
-
-fun outputError(error: String, opt: String = "") {  // функция выводит сообщение об ошибке
-    when (error) {
-        "NotEnoughArgs"     -> println("Недостаточно параметров для вызова функции")
-        "UnknownOption"     -> println("Неизвестная опция $opt")
-        "WrongInputFile"    -> println("Неверное имя файла: $opt")
-        "OptsMustBegin"     -> println("Неверный формат: опции должны начинаться с -")
-        "FormatEqual"       -> println("Неверный формат: параметры опций должны идти после =")
-        "UnknownParam"      -> println("Неизвестный параметр для опции $opt")
-        "NoParameters"      -> println("У опции $opt должны быть параметры, но их нет")
-        "BothEmpty"         -> println("Нечего сравнивать: оба файла пусты")
-        else                -> println("Неизвестная ошибка")
-    }
-}
-
-fun checkIfOkFormatParams(opt: Char, currOpt: String): Boolean {  // true, если все хорошо, false, если что-то не так
-    if (currOpt.length == 2 || (currOpt.length == 3 && currOpt[2] == '=')) { // у опции должны быть параметры
-        outputError("NoParameters", "-$opt")
-        return false
-    }
-    if (currOpt[2] != '=') {  // неправильный формат (без =)
-        outputError("FormatEqual")
-        return false
-    }
-    return true
-}
-
-fun parseInput(): List<String> {
-    var input = readLine()
-    if (input != null) {
-        input += ' '    // чтобы последняя строка корректно обработалась
-        var tempStr = ""
-        val result: MutableList<String> = mutableListOf()
-        for (symb in input) {
-            if (symb == ' ') {
-                if (tempStr.isNotEmpty()) {
-                    result.add(tempStr)
-                    tempStr = ""
-                }
-            } else {
-                tempStr += symb
-            }
-        }
-        return result.toList()
-    } else {
-        outputError("NotEnoughArgs")
-        return emptyList()
-    }
-}
-
-fun numberLength(number: Int): Int {
-    return number.toString().length
-}
-
+/**
+ * Дата класс для хранения номеров строки в каждом из двух сравниваемых файлов
+ */
 data class LineNumbers(val lineIn1: Int, val lineIn2: Int)
+
+/**
+ * Дата класс для хранения списка номеров строк для каждого статуса строк: добавленных, удаленных, не измененных
+ */
 data class LineInfo(val added: List<LineNumbers>, val deleted: List<LineNumbers>, val unchanged: List<LineNumbers>)
 
-fun writeAnywhere(line: String, outputFileName: String) {
-    if (outputFileName == "") {
-        print(line)
-    } else {
-        val outputFile = File(outputFileName)
-        outputFile.appendText(line)
-    }
-}
+/**
+ * Дата класс для хранения списков строк каждого из двух сравниваемых файлов
+ */
+data class FileLines(val file1Lines: List<String>, val file2Lines: List<String>)
 
-fun outputLine(lineNum: LineNumbers, line: String, hideOpts: Int,
-               outputFileName: String, maxNumLen1: Int, maxNumLen2: Int) {
-    var toOutput = ""
-    if (((hideOpts shr 1) and 1) == 0) {  // не нужно прятать номера строк
-        if (lineNum.lineIn1 != -1) {  // есть в первом файле
-            val lineNum1Str = (lineNum.lineIn1 + 1).toString()  // чтобы с 1 нумерация
-            toOutput += "(${lineNum1Str.padStart(maxNumLen1)})"
-        } else {
-            toOutput += "".padStart(maxNumLen1 + 2) // добавить длину двух скобок
-        }
-        if (lineNum.lineIn2 != -1) {  // есть во втором файле
-            val lineNum2Str = (lineNum.lineIn2 + 1).toString()  // чтобы с 1 нумерация
-            toOutput += "[${lineNum2Str.padStart(maxNumLen2)}]"
-        } else {
-            toOutput += "".padStart(maxNumLen2 + 2)  // добавить длину двух скобок
-        }
-        toOutput += "  "// добавим разделение между номерами строк и оставшимся
-    }
-    if (((hideOpts shr 2) and 1) == 0) {  // не нужно прятать статус изменений
-        if (lineNum.lineIn1 == -1) {  // добавление
-            toOutput += "+"
-        } else if (lineNum.lineIn2 == -1) { // удаление
-            toOutput += "-"
-        } else { // без изменений
-            toOutput += "|"
-        }
-        toOutput += "  "
-    }
-
-    writeAnywhere("$toOutput$line\n", outputFileName)
-}
-
+/**
+ * Функция, которая обрабатывает возврат функции findLCS и выводит результат работы программы с использованием
+ * функции outputLine для обработки и вывода отдельных строк
+ *
+ * @param[output] -- возврат функции findLCS; строки разделены по статусу на списки: добавленные, удаленные, не измененные
+ * @param[showOpts] -- параметры того, строки какого статуса будут отображены, в 3-битном виде
+ * @param[hideOpts] -- параметры того, какая информация будет скрыта, в 3-битном виде
+ * @param[outputFileName] -- имя файла, куда нужно вывести строку. если это имя файла является пустой строкой,
+ * вывод нужно производить в консоль
+ * @param[maxNumLen1] -- максимальная длина номера строки в первом файле. используется для выравнивания вывода
+ * @param[maxNumLen2] -- максимальная длина номера строки во втором файле. используется для выравнивания вывода
+ * @param[file1Lines] -- список строк первого файла
+ * @param[file2Lines] -- список строк второго файла
+ */
 fun outputAnswer(output: LineInfo, showOpts: Int, hideOpts: Int, outputFileName: String,
                  maxNumLen1: Int, maxNumLen2: Int, file1Lines: List<String>, file2Lines: List<String>) {
     val sizeAdded = output.added.size
@@ -155,16 +85,17 @@ fun outputAnswer(output: LineInfo, showOpts: Int, hideOpts: Int, outputFileName:
     }
 }
 
-fun myHash(str: String): Int {  // считает хэш строки
-    val mod: Long = 1000000009 // 10^9 + 9
-    val p: Long = 263
-    var result: Long = 0
-    for (symb in str) {
-        result = (result * p + symb.code) % mod
-    }
-    return result.toInt()
-}
-
+/**
+ * Функция ищет НОП по строкам двух сравниваемых файлов, и возвращает обработанный результат в виде разделения всех
+ * строк на три статуса: добавленные, удаленные, не измененные
+ *
+ * @param[file1Lines] -- список строк первого файла
+ * @param[file2Lines] -- список строк второго файла
+ * @param[ignoreLines] -- показатель того, нужно ли игнорировать пустые строки при сравнении строк файлов.
+ * равен true, если нужно, и false, если не нужно.
+ *
+ * @return дата класс LineInfo, внутри которого лежат три списка, в котором все строки файлов разделены по статуса
+ */
 fun findLCS(file1Lines: List<String>, file2Lines: List<String>, ignoreLines: Boolean): LineInfo {
     // возвращает информацию о строках: про каждую строку будет известен ее номер в файле 1 и файле 2 (если она есть)
     val numLines1 = file1Lines.size
@@ -175,10 +106,10 @@ fun findLCS(file1Lines: List<String>, file2Lines: List<String>, ignoreLines: Boo
     val hashedFile2: MutableList<Int> = mutableListOf()
     // вместо строк будем сравнивать хэши
     repeat(numLines1) {
-        hashedFile1.add(myHash(file1Lines[it]))
+        hashedFile1.add(file1Lines[it].hashCode())
     }
     repeat(numLines2) {
-        hashedFile2.add(myHash(file2Lines[it]))
+        hashedFile2.add(file2Lines[it].hashCode())
     }
 
     repeat(numLines1) { num1 ->
@@ -232,119 +163,11 @@ fun findLCS(file1Lines: List<String>, file2Lines: List<String>, ignoreLines: Boo
     return LineInfo(added.toList(), deleted.toList(), unchanged.toList())
 }
 
-fun readFiles(file1Name: String, file2Name: String): Pair<List<String>, List<String>> {
-    val file1 = File(file1Name)
-    val file2 = File(file2Name)
-    if (!file1.isFile) {  // не существует файла с именем file1Name
-        outputError("WrongInputFile", file1Name)
-        return Pair(emptyList(), emptyList())
-    }
-    if (!file2.isFile) {  // не существует файла с именем file2Name
-        outputError("WrongInputFile", file2Name)
-        return Pair(emptyList(), emptyList())
-    }
-
-    val result = Pair(file1.readLines(), file2.readLines())  // сначала список строк первого, потом второго
-    if (result.first.isEmpty() && result.second.isEmpty()) {  // оба файла пусты
-        outputError("BothEmpty")
-    }
-
-    return result
-}
-
-fun processCommand(commandList: List<String>): Int { // возвращает 0, если выполнилось без ошибок, 1 иначе
-    if (commandList.size == 1) {  // в команду нужно передать хотя бы два аргумента: названия двух файлов
-        outputError("NotEnoughArgs")
-        return 1
-    }
-
-    val file1Name = commandList[0]
-    val file2Name = commandList[1]
-    val (file1Lines, file2Lines) = readFiles(file1Name, file2Name)  // списки строк для файлов
-    if (file1Lines.isEmpty() && file2Lines.isEmpty()) {   // функция чтения файлов выдала исключение
-        return 1
-    }
-
-    var showOpts = 7 // по умолчанию все строки показываются
-    var hideOpts = 0 // по умолчанию вся информация показывается
-    var ignoreLines = false // по умолчанию пустые строки не пропускаются
-    var outputFile = "" // по умолчанию вывод в консоль
-    var addWrite = '-' // по умолчанию вывод в консоль
-
-    val options: Map<Char, String> = mapOf('h' to "ins", 's' to "adu", 'i' to "", 'w' to "F", 'W' to "F")
-    // Map показывает возможные варианты параметров команд, а также кодирует их для 3-битного представления параметров
-    for (it in (2 until commandList.size)) { // проходимся по опциям
-        val currOpt = commandList[it]
-        if (currOpt[0] != '-') {
-            outputError("OptsMustBegin")
-            return 1
-        }
-
-        if (currOpt.length == 1) {
-            outputError("UnknownOption", currOpt)
-        }
-
-        val opt = currOpt[1]
-        if (!options.containsKey(opt)) {
-            outputError("UnknownOption", "-$opt")
-            return 1
-        }
-        if (opt == 'i') {   // опция ignore empty lines не требует параметров
-            if (currOpt.length > 2) {
-                outputError("UnknownParam", "-$opt")
-                return 1
-            } else {
-                ignoreLines = true
-            }
-        } else if (options[opt] == "F") {   // добавление файла вывода
-            // учитывается только последний вызов w или W
-            if (!checkIfOkFormatParams(opt, currOpt)) {
-                return 1
-            }
-            outputFile = currOpt.substring(3)
-            addWrite = opt // w - запись, W - дозапись
-        } else {  // show or hide option
-            // учитывается только последний вызов
-            if (!checkIfOkFormatParams(opt, currOpt)) {
-                return 1
-            }
-            when (opt) {
-                's' -> showOpts = 0
-                'h' -> hideOpts = 0
-            }
-            for (param in currOpt.substring(3)) {  // проходимся по параметрам
-                val symbIndex = options[opt]!!.indexOf(param)
-                if (symbIndex == -1) {
-                    outputError("UnknownParam", "-$opt")
-                    return 1
-                }
-                when (opt) {
-                    's' -> showOpts = (showOpts or (1 shl symbIndex))
-                    'h' -> hideOpts = (hideOpts or (1 shl symbIndex))
-                }
-            }
-        }
-    }
-
-    val returnedLCSData = findLCS(file1Lines, file2Lines, ignoreLines)
-    // создадим файл вывода, если его нет
-    if (outputFile != "") {
-        val fileForOutput = File(outputFile)
-        if (!fileForOutput.isFile) {
-            fileForOutput.createNewFile()
-        }
-        if (addWrite == 'w') {  // сотрем файл, если нужно, а дальше будет дозапись
-            fileForOutput.writeText("")
-        }
-    }
-    outputAnswer(returnedLCSData, showOpts, hideOpts, outputFile,
-        numberLength(file1Lines.size), numberLength(file2Lines.size), file1Lines, file2Lines)
-        // максимальная длина номера строки меньше либо равна длине количества строк в файле
-    return 0
-}
-
-// file1.txt file2.txt -s=uad -h=ins -i -w/W=answer.txt
-
+/**
+ * Функция запускает все остальные функции, а также обрабатывает ввод из параметров компиляции
+ *
+ * @param[args] -- ввод из параметров компиляции
+ */
 fun main(args: Array<String>) {
     val commandList: List<String> = if (args.isNotEmpty()) {
         args.toList()
